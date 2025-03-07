@@ -11,7 +11,8 @@ import {
   ListItem, 
   ListItemText, 
   ToggleButton, 
-  ToggleButtonGroup 
+  ToggleButtonGroup,
+  Grow
 } from '@mui/material';
 import { jsPDF } from 'jspdf';
 
@@ -133,113 +134,138 @@ function App() {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        WebApp Code Extractor
-      </Typography>
+    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+      <Grow in timeout={1000}>
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Typography variant="h2" component="h1" sx={{ fontWeight: 'bold', color: '#3f51b5' }}>
+            Striver Pasting Service
+          </Typography>
+          <Typography variant="subtitle1" sx={{ color: '#555', mt: 1 }}>
+            Effortlessly combine and convert your code!
+          </Typography>
+        </Box>
+      </Grow>
+
       <ToggleButtonGroup
         color="primary"
         value={mode}
         exclusive
         onChange={handleModeChange}
-        sx={{ mb: 2 }}
+        sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}
       >
         <ToggleButton value="normal">Normal Upload</ToggleButton>
-        {/* Add track mode toggle here if needed */}
+        {/* Future track mode toggle can go here */}
       </ToggleButtonGroup>
 
       {mode === 'normal' && (
         <>
-          <Typography variant="body1" gutterBottom>
-            Drag & drop files/folders here, or click to select.
-          </Typography>
-          <Box
-            {...getRootProps()}
-            sx={{
-              border: '2px dashed #ccc',
-              borderRadius: 2,
-              p: 4,
-              textAlign: 'center',
-              mb: 2,
-              backgroundColor: isDragActive ? '#f0f0f0' : 'inherit',
-              cursor: 'pointer',
-            }}
-          >
-            <input {...getInputProps()} webkitdirectory="true" directory="true" multiple />
-            {isDragActive ? (
-              <Typography>Drop the files/folders here ...</Typography>
-            ) : (
-              <Typography>Drag & drop files/folders here, or click to select.</Typography>
-            )}
-          </Box>
+          <Grow in timeout={1500}>
+            <Typography variant="body1" gutterBottom align="center">
+              Drag & drop files/folders here, or click to select.
+            </Typography>
+          </Grow>
+          <Grow in timeout={2000}>
+            <Box
+              {...getRootProps()}
+              sx={{
+                border: '3px dashed #3f51b5',
+                borderRadius: 2,
+                p: 4,
+                textAlign: 'center',
+                mb: 3,
+                background: 'linear-gradient(135deg, #e3f2fd, #f3e5f5)',
+                cursor: 'pointer',
+                transition: 'background-color 0.3s ease',
+                '&:hover': { backgroundColor: '#e8eaf6' }
+              }}
+            >
+              <input {...getInputProps()} webkitdirectory="true" directory="true" multiple />
+              {isDragActive ? (
+                <Typography variant="h6" sx={{ color: '#3f51b5' }}>
+                  Drop the files/folders here...
+                </Typography>
+              ) : (
+                <Typography variant="h6" sx={{ color: '#3f51b5' }}>
+                  Drag & drop files/folders here, or click to select.
+                </Typography>
+              )}
+            </Box>
+          </Grow>
 
           {normalFiles.length > 0 && (
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="h6">Selected Files:</Typography>
-              <List>
-                {normalFiles.map((file, index) => (
-                  <ListItem key={index} divider>
-                    <ListItemText
-                      primary={file.name}
-                      secondary={file.webkitRelativePath ? file.webkitRelativePath : 'No folder path'}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Box>
+            <Grow in timeout={2500}>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6">Selected Files:</Typography>
+                <List>
+                  {normalFiles.map((file, index) => (
+                    <ListItem key={index} divider>
+                      <ListItemText
+                        primary={file.name}
+                        secondary={file.webkitRelativePath ? file.webkitRelativePath : 'No folder path'}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            </Grow>
           )}
 
-          <Box sx={{ mb: 2 }}>
-            <Button variant="contained" color="primary" onClick={handleNormalUpload} disabled={normalLoading}>
-              {normalLoading ? 'Uploading...' : 'Upload and Process'}
-            </Button>
-          </Box>
+          <Grow in timeout={3000}>
+            <Box sx={{ mb: 3, textAlign: 'center' }}>
+              <Button variant="contained" color="primary" onClick={handleNormalUpload} disabled={normalLoading}>
+                {normalLoading ? 'Uploading...' : 'Upload and Process'}
+              </Button>
+            </Box>
+          </Grow>
 
           {normalLoading && (
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <CircularProgress size={24} />
-              <Typography sx={{ ml: 1 }}>Processing... {normalTimer} s</Typography>
-            </Box>
+            <Grow in timeout={3500}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 3 }}>
+                <CircularProgress size={24} sx={{ mr: 2 }} />
+                <Typography>Processing... {normalTimer} s</Typography>
+              </Box>
+            </Grow>
           )}
 
           {normalError && (
-            <Typography color="error" gutterBottom>
-              {normalError}
-            </Typography>
+            <Grow in timeout={3500}>
+              <Typography color="error" align="center" gutterBottom>
+                {normalError}
+              </Typography>
+            </Grow>
           )}
 
           {normalDownloadUrl && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="h6">Processing complete!</Typography>
-              <Link href={`http://localhost:3001${normalDownloadUrl}`} target="_blank" rel="noopener">
-                Download Combined Output (Text)
-              </Link>
+            <Grow in timeout={4000}>
+              <Box sx={{ mt: 3, textAlign: 'center' }}>
+                <Typography variant="h6">Processing complete!</Typography>
+                <Link href={`http://localhost:3001${normalDownloadUrl}`} target="_blank" rel="noopener" sx={{ display: 'block', mb: 2 }}>
+                  Download Combined Output (Text)
+                </Link>
 
-              {/* PDF Download Option */}
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body1" gutterBottom>
-                  Enter a name for the PDF:
-                </Typography>
-                <input 
-                  type="text" 
-                  placeholder="e.g., myoutput.pdf"
-                  value={pdfName}
-                  onChange={(e) => setPdfName(e.target.value)}
-                  style={{ padding: '8px', width: '100%', marginBottom: '8px' }}
-                />
-                <Button variant="contained" color="secondary" onClick={handleDownloadPDF}>
-                  Download as PDF
-                </Button>
+                {/* PDF Download Option */}
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body1" gutterBottom>
+                    Enter a name for the PDF:
+                  </Typography>
+                  <input 
+                    type="text" 
+                    placeholder="e.g., myoutput.pdf"
+                    value={pdfName}
+                    onChange={(e) => setPdfName(e.target.value)}
+                    style={{ padding: '8px', width: '100%', marginBottom: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                  />
+                  <Button variant="contained" color="secondary" onClick={handleDownloadPDF}>
+                    Download as PDF
+                  </Button>
+                </Box>
               </Box>
-            </Box>
+            </Grow>
           )}
         </>
       )}
 
-      {/* 
-        (Track mode section would go here if implemented.
-         You can add a similar PDF download option for track mode if desired.)
-      */}
+      {/* Track mode can be added similarly with its own transitions and styling */}
     </Container>
   );
 }
