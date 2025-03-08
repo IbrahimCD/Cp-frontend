@@ -307,7 +307,7 @@ function App() {
                 <Typography variant="h6" gutterBottom sx={{ color: '#6b4f4f', fontFamily: '"Times New Roman", serif' }}>
                   Processing complete! WOW! Your masterpiece is ready!
                 </Typography>
-                <Link href={`http://localhost:3001${normalDownloadUrl}`} target="_blank" rel="noopener" sx={{
+                <Link href={`https://cp-backend-u3uo.onrender.com${normalDownloadUrl}`} target="_blank" rel="noopener" sx={{
                   display: 'block', mb: 2, fontFamily: '"Times New Roman", serif', color: '#6b4f4f'
                 }}>
                   Download Combined Output (Text)
