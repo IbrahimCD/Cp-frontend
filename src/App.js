@@ -89,7 +89,7 @@ function App() {
     });
 
     try {
-      const response = await fetch('http://localhost:3001/upload', {
+      const response = await fetch('https://cp-backend-u3uo.onrender.com/upload', {
         method: 'POST',
         body: formData,
       });
@@ -112,7 +112,7 @@ function App() {
   const handleDownloadPDF = async () => {
     if (!normalDownloadUrl) return;
     try {
-      const response = await fetch(`http://localhost:3001${normalDownloadUrl}`);
+      const response = await fetch(`https://cp-backend-u3uo.onrender.com${normalDownloadUrl}`);
       const text = await response.text();
 
       const doc = new jsPDF();
