@@ -107,7 +107,8 @@ function App() {
     }
   };
 
-  // PDF download function that paginates the full combined output.
+  // Updated PDF download function:
+  // Title is printed in a larger font while the content is printed in a smaller font with reduced line height.
   const handleDownloadPDF = async () => {
     if (!normalDownloadUrl) return;
     try {
@@ -115,14 +116,21 @@ function App() {
       const text = await response.text();
 
       const doc = new jsPDF();
-      const margin = 15;
+      // Title in larger font
+      doc.setFontSize(16);
+      doc.text("Combined Output", 10, 20);
+
+      // Set font for content
+      doc.setFontSize(8);
+      const margin = 10;
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const maxLineWidth = pageWidth - margin * 2;
-      const lines = doc.splitTextToSize(text, maxLineWidth);
-
-      let y = margin;
-      const lineHeight = 10;
+      // Trim extra whitespace and split text
+      const lines = doc.splitTextToSize(text, maxLineWidth).map(line => line.trim());
+      
+      let y = 30; // Start after the title
+      const lineHeight = 7; // Reduced line height
       lines.forEach((line) => {
         if (y + lineHeight > pageHeight - margin) {
           doc.addPage();
