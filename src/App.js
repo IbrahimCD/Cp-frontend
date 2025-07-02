@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import { jsPDF } from 'jspdf';
+import FolderTreeSelector from './FolderTreeSelector';
 
 function App() {
   // Mode: 'normal' (future track mode can be added)
@@ -38,6 +39,8 @@ function App() {
 
   // Info dialog state
   const [openInfo, setOpenInfo] = useState(false);
+
+  const [page, setPage] = useState('home');
 
   // Timer effect for normal mode loading
   useEffect(() => {
@@ -147,6 +150,16 @@ function App() {
       alert("Error generating PDF: " + err.message);
     }
   };
+
+  if (page === 'folder-tree') {
+    return (
+      <div className="App">
+        <button onClick={() => setPage('home')}>Back to Home</button>
+        <h1>Folder Tree Selector Demo</h1>
+        <FolderTreeSelector />
+      </div>
+    );
+  }
 
   return (
     <Container maxWidth="lg" sx={{
@@ -343,6 +356,8 @@ function App() {
           )}
         </>
       )}
+
+      <button onClick={() => setPage('folder-tree')}>Go to Folder Tree Selector</button>
     </Container>
   );
 }
