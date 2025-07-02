@@ -20,6 +20,9 @@ import FolderIcon from '@mui/icons-material/Folder';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
+import ClearIcon from '@mui/icons-material/Clear';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import RemoveDoneIcon from '@mui/icons-material/RemoveDone';
 
 // Helper to parse a simple tree text into a nested structure
 function parseTree(text) {
@@ -33,7 +36,7 @@ function parseTree(text) {
     const [, indent, , name] = match;
     const depth = indent.length + (line.includes('│') || line.includes('├') || line.includes('└') ? 1 : 0);
     const isFolder = name.endsWith('/') || !name.includes('.');
-    const node = { name: name.trim(), children: [], checked: false, open: true, isFolder };
+    const node = { name: name.trim(), children: [], checked: false, indeterminate: false, open: true, isFolder };
     while (stack.length && stack[stack.length - 1].depth >= depth) {
       stack.pop();
     }
@@ -41,6 +44,53 @@ function parseTree(text) {
     stack.push({ children: node.children, depth });
   });
   return root;
+}
+
+// Recursively update check state for a node and its children
+function setCheckState(node, checked) {
+  node.checked = checked;
+  node.indeterminate = false;
+  if (node.children.length > 0) {
+    node.children.forEach(child => setCheckState(child, checked));
+  }
+}
+
+// Recursively update parent indeterminate/checked state
+function updateParentState(tree, path) {
+  if (path.length === 0) return;
+  const parentPath = path.slice(0, -1);
+  let parent = tree;
+  for (let i = 0; i < parentPath.length; i++) {
+    parent = parent[parentPath[i]].children;
+  }
+  const idx = path[path.length - 1];
+  const node = parent[idx];
+  // Now update up the tree
+  let currentPath = parentPath;
+  while (currentPath.length > 0) {
+    let parentNode = tree;
+    for (let i = 0; i < currentPath.length; i++) {
+      parentNode = parentNode[currentPath[i]];
+    }
+    const allChecked = parentNode.children.every(child => child.checked);
+    const noneChecked = parentNode.children.every(child => !child.checked && !child.indeterminate);
+    parentNode.checked = allChecked;
+    parentNode.indeterminate = !allChecked && !noneChecked;
+    currentPath = currentPath.slice(0, -1);
+  }
+}
+
+// Recursively collect selected files/folders
+function collectSelected(nodes, path = '', arr = []) {
+  nodes.forEach(node => {
+    if (node.checked) {
+      arr.push(path + node.name);
+    }
+    if (node.children.length > 0) {
+      collectSelected(node.children, path + node.name + '/', arr);
+    }
+  });
+  return arr;
 }
 
 function TreeNode({ node, onToggle, onExpand, path }) {
@@ -62,6 +112,7 @@ function TreeNode({ node, onToggle, onExpand, path }) {
           <Checkbox
             edge="start"
             checked={node.checked}
+            indeterminate={node.indeterminate}
             tabIndex={-1}
             disableRipple
             onChange={() => onToggle(path)}
@@ -119,7 +170,9 @@ export default function FolderTreeSelector() {
       for (let i = 0; i < path.length; i++) {
         node = node[path[i]];
       }
-      node.checked = !node.checked;
+      const newChecked = !node.checked;
+      setCheckState(node, newChecked);
+      updateParentState(newTree, path);
       return newTree;
     });
   };
@@ -135,6 +188,30 @@ export default function FolderTreeSelector() {
       return newTree;
     });
   };
+
+  const handleClear = () => {
+    setInput('');
+    setTree([]);
+    setError('');
+  };
+
+  const handleSelectAll = () => {
+    setTree(prevTree => {
+      const newTree = JSON.parse(JSON.stringify(prevTree));
+      newTree.forEach(node => setCheckState(node, true));
+      return newTree;
+    });
+  };
+
+  const handleDeselectAll = () => {
+    setTree(prevTree => {
+      const newTree = JSON.parse(JSON.stringify(prevTree));
+      newTree.forEach(node => setCheckState(node, false));
+      return newTree;
+    });
+  };
+
+  const selected = collectSelected(tree);
 
   return (
     <Container maxWidth="sm" sx={{ mt: 6, mb: 6 }}>
@@ -159,32 +236,78 @@ export default function FolderTreeSelector() {
           error={!!error}
           helperText={error}
         />
-        <Box display="flex" justifyContent="center" mb={2}>
-          <Button
+        <Box display="flex" justifyContent="center" gap={2} mb={2}>
+          <Tooltip title="Parse the pasted tree"><span><Button
             variant="contained"
             color="primary"
             size="large"
             onClick={handleParse}
-            sx={{ minWidth: 180, fontWeight: 600 }}
+            sx={{ minWidth: 120, fontWeight: 600 }}
+            disabled={!input.trim()}
           >
             Parse Tree
-          </Button>
+          </Button></span></Tooltip>
+          <Tooltip title="Clear input and tree"><span><Button
+            variant="outlined"
+            color="error"
+            size="large"
+            onClick={handleClear}
+            sx={{ minWidth: 120, fontWeight: 600 }}
+            startIcon={<ClearIcon />}
+            disabled={!input && tree.length === 0}
+          >
+            Clear
+          </Button></span></Tooltip>
         </Box>
-        <Divider sx={{ mb: 2 }} />
         {tree.length > 0 && (
-          <Paper elevation={1} sx={{ p: 2, background: '#f9f9f9' }}>
-            <List>
-              {tree.map((node, i) => (
-                <TreeNode
-                  key={i}
-                  node={node}
-                  onToggle={handleToggle}
-                  onExpand={handleExpand}
-                  path={[i]}
-                />
-              ))}
-            </List>
-          </Paper>
+          <>
+            <Box display="flex" justifyContent="center" gap={2} mb={2}>
+              <Tooltip title="Select all files and folders"><span><Button
+                variant="outlined"
+                color="success"
+                size="small"
+                onClick={handleSelectAll}
+                startIcon={<DoneAllIcon />}
+              >
+                Select All
+              </Button></span></Tooltip>
+              <Tooltip title="Deselect all files and folders"><span><Button
+                variant="outlined"
+                color="warning"
+                size="small"
+                onClick={handleDeselectAll}
+                startIcon={<RemoveDoneIcon />}
+              >
+                Deselect All
+              </Button></span></Tooltip>
+            </Box>
+            <Divider sx={{ mb: 2 }} />
+            <Paper elevation={1} sx={{ p: 2, background: '#f9f9f9' }}>
+              <List>
+                {tree.map((node, i) => (
+                  <TreeNode
+                    key={i}
+                    node={node}
+                    onToggle={handleToggle}
+                    onExpand={handleExpand}
+                    path={[i]}
+                  />
+                ))}
+              </List>
+            </Paper>
+            <Box mt={2}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Selected: {selected.length}
+              </Typography>
+              {selected.length > 0 && (
+                <Box mt={1} sx={{ maxHeight: 120, overflow: 'auto', background: '#f5f5f5', borderRadius: 1, p: 1 }}>
+                  {selected.map((item, idx) => (
+                    <Typography key={idx} variant="body2" sx={{ wordBreak: 'break-all' }}>{item}</Typography>
+                  ))}
+                </Box>
+              )}
+            </Box>
+          </>
         )}
       </Paper>
     </Container>
