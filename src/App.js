@@ -294,7 +294,7 @@ function App() {
                   </Button>
                 </Box>
                 <Typography variant="body2" color="text.secondary" mb={1}>
-                  {normalFiles.length} file(s), {normalFiles.reduce((acc, f) => acc + f.size, 0) / 1024:.1f} KB total
+                  {normalFiles.length} file(s), {(normalFiles.reduce((acc, f) => acc + f.size, 0) / 1024).toFixed(1)} KB total
                 </Typography>
                 <List>
                   {normalFiles.map((file, index) => (
