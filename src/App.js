@@ -24,6 +24,8 @@ import {
 import InfoIcon from '@mui/icons-material/Info';
 import { jsPDF } from 'jspdf';
 import FolderTreeSelector from './FolderTreeSelector';
+import TextField from '@mui/material/TextField';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
 function App() {
   // Mode: 'normal' (future track mode can be added)
@@ -41,6 +43,8 @@ function App() {
   const [openInfo, setOpenInfo] = useState(false);
 
   const [page, setPage] = useState('home');
+
+  const [dropActive, setDropActive] = useState(false);
 
   // Timer effect for normal mode loading
   useEffect(() => {
@@ -69,10 +73,13 @@ function App() {
   // Normal mode: useDropzone for file/folder selection.
   const onNormalDrop = useCallback((acceptedFiles) => {
     setNormalFiles(acceptedFiles);
+    setDropActive(false);
   }, []);
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: onNormalDrop,
     multiple: true,
+    onDragEnter: () => setDropActive(true),
+    onDragLeave: () => setDropActive(false),
   });
 
   // Handle upload for Normal mode.
@@ -151,13 +158,26 @@ function App() {
     }
   };
 
+  const handleClearFiles = () => {
+    setNormalFiles([]);
+    setNormalDownloadUrl('');
+    setNormalError('');
+    setPdfName('');
+  };
+
+  // PDF name validation
+  const isValidPdfName = (name) => {
+    return /^[\w,\s-]+\.pdf$/i.test(name.trim());
+  };
+
   if (page === 'folder-tree') {
     return (
-      <div className="App">
-        <button onClick={() => setPage('home')}>Back to Home</button>
-        <h1>Folder Tree Selector Demo</h1>
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Button variant="outlined" onClick={() => setPage('home')} sx={{ mb: 2 }}>
+          Back to Home
+        </Button>
         <FolderTreeSelector />
-      </div>
+      </Container>
     );
   }
 
@@ -240,12 +260,12 @@ function App() {
               {...getRootProps()}
               elevation={3}
               sx={{
-                border: '3px dashed #6b4f4f',
+                border: dropActive || isDragActive ? '3px solid #1976d2' : '3px dashed #6b4f4f',
                 borderRadius: '16px',
                 p: 4,
                 textAlign: 'center',
                 mb: 3,
-                background: 'rgba(255, 255, 255, 0.9)',
+                background: dropActive || isDragActive ? '#e3f2fd' : 'rgba(255, 255, 255, 0.9)',
                 cursor: 'pointer',
                 transition: 'background-color 0.3s ease, transform 0.3s ease',
                 '&:hover': { backgroundColor: '#f4e1d2', transform: 'scale(1.02)' }
@@ -253,7 +273,7 @@ function App() {
             >
               <input {...getInputProps()} webkitdirectory="true" directory="true" multiple />
               {isDragActive ? (
-                <Typography variant="h6" sx={{ color: '#6b4f4f' }}>
+                <Typography variant="h6" sx={{ color: '#1976d2' }}>
                   Drop the files/folders here...
                 </Typography>
               ) : (
@@ -267,7 +287,15 @@ function App() {
           {normalFiles.length > 0 && (
             <Grow in timeout={2500}>
               <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" sx={{ color: '#6b4f4f' }}>Selected Files:</Typography>
+                <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                  <Typography variant="h6" sx={{ color: '#6b4f4f' }}>Selected Files:</Typography>
+                  <Button variant="outlined" color="error" size="small" startIcon={<RestartAltIcon />} onClick={handleClearFiles}>
+                    Clear
+                  </Button>
+                </Box>
+                <Typography variant="body2" color="text.secondary" mb={1}>
+                  {normalFiles.length} file(s), {normalFiles.reduce((acc, f) => acc + f.size, 0) / 1024:.1f} KB total
+                </Typography>
                 <List>
                   {normalFiles.map((file, index) => (
                     <ListItem key={index} divider>
@@ -286,7 +314,7 @@ function App() {
 
           <Grow in timeout={3000}>
             <Box sx={{ mb: 3, textAlign: 'center' }}>
-              <Button variant="contained" color="primary" onClick={handleNormalUpload} disabled={normalLoading} sx={{
+              <Button variant="contained" color="primary" onClick={handleNormalUpload} disabled={normalLoading || normalFiles.length === 0} sx={{
                 px: 4, py: 1, fontSize: '1.1rem',
                 fontFamily: '"Times New Roman", serif'
               }}>
@@ -330,21 +358,18 @@ function App() {
                   <Typography variant="body1" gutterBottom sx={{ fontFamily: '"Times New Roman", serif', color: '#6b4f4f' }}>
                     Enter a name for the PDF:
                   </Typography>
-                  <input 
-                    type="text" 
+                  <TextField
+                    variant="outlined"
+                    size="small"
+                    fullWidth
                     placeholder="e.g., myoutput.pdf"
                     value={pdfName}
-                    onChange={(e) => setPdfName(e.target.value)}
-                    style={{ 
-                      padding: '8px', 
-                      width: '100%', 
-                      marginBottom: '8px', 
-                      borderRadius: '4px', 
-                      border: '1px solid #ccc', 
-                      fontFamily: '"Times New Roman", serif'
-                    }}
+                    onChange={e => setPdfName(e.target.value)}
+                    error={!!pdfName && !isValidPdfName(pdfName)}
+                    helperText={pdfName && !isValidPdfName(pdfName) ? 'Enter a valid PDF filename (e.g., myoutput.pdf)' : ''}
+                    sx={{ mb: 1, background: '#fff', borderRadius: 1 }}
                   />
-                  <Button variant="contained" color="secondary" onClick={handleDownloadPDF} sx={{
+                  <Button variant="contained" color="secondary" onClick={handleDownloadPDF} disabled={!isValidPdfName(pdfName)} sx={{
                     px: 4, py: 1, fontSize: '1.1rem',
                     fontFamily: '"Times New Roman", serif'
                   }}>
@@ -357,7 +382,11 @@ function App() {
         </>
       )}
 
-      <button onClick={() => setPage('folder-tree')}>Go to Folder Tree Selector</button>
+      <Box sx={{ textAlign: 'center', mt: 4 }}>
+        <Button variant="outlined" onClick={() => setPage('folder-tree')}>
+          Go to Folder Tree Selector
+        </Button>
+      </Box>
     </Container>
   );
 }
